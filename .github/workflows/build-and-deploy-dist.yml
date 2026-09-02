@@ -1,4 +1,4 @@
-name: 构建油猴脚本并部署到 dist 分支
+name: 构建油猴脚本并发布到 GitHub Releases
 
 on:
   push:
@@ -9,49 +9,52 @@ permissions:
   contents: write
 
 jobs:
-  build-and-deploy:
-    name: 构建 + 部署 dist
+  build-and-release:
+    name: 构建 + 发布 Release
     runs-on: ubuntu-latest
 
     steps:
-      - name: 1/6 检出源码（master 分支）
+      - name: 1/7 检出源码（master 分支）
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: master
 
-      - name: 2/6 设置 Node.js 22.x（LTS，避开 Node 20 废弃）
+      - name: 2/7 设置 Node.js 22.x（LTS，避开 Node 20 废弃）
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          # 利用 setup-node 开启 corepack，后面 pnpm/action-setup 即使没参数也能从 packageManager 解析
           corepack: true
 
-      - name: 3/6 安装 pnpm（双保险：packageManager + 显式 version）
+      - name: 3/7 安装 pnpm（双保险：packageManager + 显式 version）
         uses: pnpm/action-setup@v4
         id: pnpm-install
         with:
           version: 10.30.1
           run_install: false
 
-      - name: 4/6 安装依赖
+      - name: 4/7 安装依赖
         shell: bash
         run: |
           set -euo pipefail
           pnpm install --frozen-lockfile=false
 
-      - name: 5/6 构建油猴脚本产物
-        shell: bash
+      - name: 5/7 构建油猴脚本产物（完整版本：含 Vue 注入）
         id: build
+        shell: bash
         run: |
           set -euo pipefail
           pnpm build
           echo "--- dist 目录清单 ---"
           ls -lah dist
           echo "--- 脚本头关键字段检查 ---"
-          head -n 25 dist/rup-tampermonkey.user.js
+          head -n 30 dist/rup-tampermonkey.user.js
+          # 把版本号输出到后续步骤可用（从 package.json 读取，vite 就是用它写进脚本头）
+          VERSION=$(node -e 'process.stdout.write(require("./package.json").version)')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo ">>> VERSION = $VERSION"
 
-      - name: 5.1/6 上传 Actions 产物（可选手动下载用）
+      - name: 5.1/7 上传 Actions 产物（可选手动下载用，90 天留存）
         uses: actions/upload-artifact@v4
         with:
           name: rup-tampermonkey.user.js
@@ -59,78 +62,64 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: 6/6 推送 dist/ 到 dist 分支（git worktree，路径可控）
+      - name: 6/7 生成精简 meta.user.js（只含头，用于 Tampermonkey @updateURL 比对版本；体积 ~2KB）
+        id: meta
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BUILD_COMMIT: ${{ github.sha }}
-          GITHUB_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.build.outputs.version }}
         run: |
           set -euo pipefail
+          META_OUT=meta.user.js
 
-          # 6.1 准备部署临时目录（结构：/README.md + /dist/rup-tampermonkey.user.js）
-          mkdir -p /tmp/deploy-root/dist
-          cp dist/rup-tampermonkey.user.js /tmp/deploy-root/dist/rup-tampermonkey.user.js
+          # 从 dist/rup-tampermonkey.user.js 提取 "// ==UserScript== ... // ==/UserScript==" 的头块
+          # 这一段正是 Tampermonkey 需要的元信息，不含任何打包代码 / Vue 代码
+          awk '
+            /^\/\/ ==UserScript==/ { in_block = 1 }
+            in_block { print }
+            /^\/\/ ==\/UserScript==/ { in_block = 0; exit }
+          ' dist/rup-tampermonkey.user.js > "$META_OUT"
 
-          # 写 README.md 到部署目录（printf 逐行写，避免 YAML + Bash Heredoc 嵌套导致的 YAML 语法歧义）
-          RD=/tmp/deploy-root/README.md
-          {
-            printf '# RUP Tampermonkey - 脚本分发分支（自动部署，请勿手动修改）\n\n'
-            printf '该分支（`dist`）存储 RUP Tampermonkey 油猴脚本的**自动构建产物**，\n'
-            printf '供 Tampermonkey / Violentmonkey / 篡改猴 读取并自动更新。\n\n'
-            printf '源代码 / 问题反馈 / 功能需求 请到 master 分支：\n'
-            printf '  https://github.com/%s\n\n' "$GITHUB_REPO"
-            printf '脚本自动更新直链：\n'
-            printf '  https://raw.githubusercontent.com/%s/dist/dist/rup-tampermonkey.user.js\n\n' "$GITHUB_REPO"
-            printf '文件位置：\n'
-            printf '  - dist/rup-tampermonkey.user.js\n'
-          } > "$RD"
+          echo ">>> 生成的 meta.user.js 内容（头 30 行）："
+          head -n 30 "$META_OUT"
+          echo ">>> meta.user.js 大小："
+          wc -c "$META_OUT" || ls -lah "$META_OUT"
 
-          # 6.2 git 作者信息
-          git config --global user.name  "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # 同时把 meta.user.js 复制到 dist/ 目录，便于 Release 步骤统一从 dist/ 上传 assets
+          cp -v "$META_OUT" "dist/$META_OUT"
 
-          # 6.3 拉取 dist 分支（远端不存在时新建 orphan 分支）
-          set +e
-          git show-ref --verify --quiet "refs/remotes/origin/dist"
-          HAS_DIST=$?
-          set -e
-          if [ "$HAS_DIST" = "0" ]; then
-            echo ">>> 远端 dist 分支存在，检出到临时 worktree"
-            git worktree add -B dist /tmp/dist-wt origin/dist
-          else
-            echo ">>> 远端 dist 分支不存在，新建 orphan 工作区"
-            git worktree add --detach /tmp/dist-wt
-            cd /tmp/dist-wt
-            git checkout --orphan dist
-            git reset --hard
-            cd - >/dev/null
-          fi
+          echo "meta_file=$META_OUT" >> "$GITHUB_OUTPUT"
+          echo "tag_name=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "release_name=RUP Tampermonkey v$VERSION" >> "$GITHUB_OUTPUT"
 
-          # 6.4 用构建产物覆盖 worktree（保留 git 元信息）
-          find /tmp/dist-wt -mindepth 1 -maxdepth 1 -not -name '.git' -exec rm -rf {} +
-          cp -R /tmp/deploy-root/. /tmp/dist-wt/
+      - name: 7/7 发布到 GitHub Releases（assets 携带完整脚本 + 精简 meta）
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag_name }}
+          name: ${{ steps.meta.outputs.release_name }}
+          # 生成 release body（中文），包含版本信息 + 更新指引
+          body: |
+            ## RUP 油猴脚本 ${{ steps.meta.outputs.tag_name }}
 
-          # 6.5 构造 commit 消息（写文件再 git commit -F，彻底规避 Bash HERE-DOC 与 YAML 缩进冲突）
-          cd /tmp/dist-wt
-          git add -A
-          if git diff --cached --quiet; then
-            echo ">>> dist 分支内容无变更，跳过 commit"
-          else
-            VERSION_LINE="unknown"
-            if [ -f dist/rup-tampermonkey.user.js ]; then
-              VERSION_LINE=$(head -n 20 dist/rup-tampermonkey.user.js | grep -E '^//\s*@version' || echo "@version unknown")
-            fi
-            CM=/tmp/dist-wt/.commit-msg.txt
-            {
-              printf 'deploy: 分发油猴脚本 %s (%s)\n\n' "$VERSION_LINE" "${BUILD_COMMIT:0:7}"
-              printf '由 GitHub Actions 自动构建并部署到 dist 分支\n'
-              printf '来源 commit: %s\n' "$BUILD_COMMIT"
-            } > "$CM"
-            git commit -F "$CM"
-            rm -f "$CM"
-          fi
+            由 GitHub Actions 自动构建并发布（来源 commit：${{ github.sha }}）
 
-          # 6.6 用 GITHUB_TOKEN + x-access-token 凭据推送 dist:dist
-          AUTH_REPO="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
-          git push "$AUTH_REPO" dist:dist
+            ### 📦 下载安装
+            | 文件 | 说明 |
+            |------|------|
+            | `rup-tampermonkey.user.js` | **完整脚本（推荐直接安装）**，双击/拖入篡改猴即可安装 |
+            | `meta.user.js` | **仅头信息（update/updateURL 用）**，Tampermonkey 定时拉它比对 `@version` 决定是否更新；体积仅 ~2 KB |
+
+            ### 🔗 自动更新说明
+            安装过本脚本的用户：
+            - 篡改猴会定时读取 `meta.user.js` 头的 `@version`（通过脚本头 `@updateURL`）
+            - 版本更高则自动后台更新 / 弹窗提示更新
+            - 也可以在篡改猴仪表盘 → RUP 脚本 → 右键「查找更新」手动触发
+
+            ### 🧭 仓库
+            主页：${{ github.server_url }}/${{ github.repository }}
+            Releases：${{ github.server_url }}/${{ github.repository }}/releases
+          files: |
+            dist/rup-tampermonkey.user.js
+            dist/meta.user.js
+          # 如果 tag 已存在就覆盖对应 Release 的 assets（避免重复 tag 报错）
+          fail_on_unmatched_files: true
+          make_latest: true
