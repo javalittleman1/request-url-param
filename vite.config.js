@@ -15,6 +15,13 @@ export default defineConfig({
         version: '0.1.0',
         icon: `data:image/svg+xml;charset=UTF-8,${rabbitSvg}`,
         match: ['*://*/*'],
+        // ★ 脚本自动更新地址（篡改猴会定时检查该地址的 version 元字段，比本地高就会提示自动更新）
+        //   指向 GitHub 仓库的 raw 分支 master 下构建产物（push 后用户能立即收到更新）
+        updateURL: 'https://raw.githubusercontent.com/javalittleman1/request-url-param/master/dist/rup-tampermonkey.user.js',
+        downloadURL: 'https://raw.githubusercontent.com/javalittleman1/request-url-param/master/dist/rup-tampermonkey.user.js',
+        // 可选：用户脚本的源代码仓库主页，方便点跳转
+        homepageURL: 'https://github.com/javalittleman1/request-url-param',
+        supportURL: 'https://github.com/javalittleman1/request-url-param/issues',
         noframes: true, // ★ 关键：油猴内核级阻止脚本在 iframe 中执行（比任何 JS 守卫都早且可靠）
         grant: [
           'GM_registerMenuCommand',
