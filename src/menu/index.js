@@ -20,6 +20,12 @@ let toggleMenuId = null;
 let backupMenuId = null;
 let registeredHostname = null;
 
+// 🔒 防重入锁：避免因 GM 菜单重注册机制导致回调被触发两次
+// 当用户点击一次菜单后，在整个回调执行 + 重注册完成前，忽略任何重复调用
+let _toggleCallbackLock = false;
+// 记录上一次通知时的「hostname + enabled + 毫秒时间戳」三元组，防止极端情况下的重复通知
+let _lastNotificationKey = '';
+
 /**
  * Unicode 实心圆符号（作为状态圆点图标）
  * Tampermonkey 支持菜单项文本里的简单样式，这里用颜色标记前缀更直观
@@ -86,29 +92,52 @@ function registerToggleMenu(hostname) {
   const menuText = `🐰 RUP：${statusDot} 修改此页参数（${statusText}）`;
 
   const onClick = function () {
-    // 1. 取反状态 → 持久化 → 发事件
-    const currEnabled = isDomainEnabled(hostname);
-    const newValue = !currEnabled;
-    setDomainEnabled(hostname, newValue);
-    eventBus.emit('rup:domain-toggle', { hostname, enabled: newValue });
+    // 🔒 防重入：同一用户点击过程中回调若被 GM 重复触发（如重注册导致），直接忽略
+    if (_toggleCallbackLock) return;
+    _toggleCallbackLock = true;
 
-    // 2. 通知
-    if (typeof GM_notification === 'function') {
-      try {
-        GM_notification({
-          text: newValue ? '🟢 已启用：修改参数功能打开' : '⚫ 已禁用：修改参数功能关闭',
-          title: 'RUP 提示',
-          timeout: 2000,
-          highlight: true,
-        });
-      } catch (e) { /* 静默 */ }
-    }
+    try {
+      // 1. 取反状态 → 持久化 → 发事件
+      const currEnabled = isDomainEnabled(hostname);
+      const newValue = !currEnabled;
 
-    // 3. 关键：注销当前菜单 → 立即以新状态重注册（确保下次打开菜单显示新颜色和新状态）
-    if (hasGmApi()) {
-      try { GM_unregisterMenuCommand(toggleMenuId); } catch (e) {}
-      toggleMenuId = null;
-      registerToggleMenu(hostname);
+      // 二次比对：如果新值 == 旧值（多线程/重入导致），跳过不做任何事
+      if (newValue === currEnabled) {
+        return;
+      }
+      setDomainEnabled(hostname, newValue);
+      eventBus.emit('rup:domain-toggle', { hostname, enabled: newValue });
+
+      // 2. 通知（三重去重：锁 + 状态比对 + key 比对）
+      if (typeof GM_notification === 'function') {
+        const nowTs = Date.now();
+        const notifKey = `${hostname}::${newValue}::${Math.floor(nowTs / 1200)}`; // 1.2s 窗口内同 hostname+enabled 只算一次
+        if (notifKey !== _lastNotificationKey) {
+          _lastNotificationKey = notifKey;
+          try {
+            GM_notification({
+              text: newValue ? '🟢 已启用：修改参数功能打开' : '⚫ 已禁用：修改参数功能关闭',
+              title: 'RUP 提示',
+              timeout: 2000,
+              highlight: true,
+              silent: true,
+            });
+          } catch (e) { /* 静默 */ }
+        }
+      }
+
+      // 3. 关键：注销当前菜单 → 立即以新状态重注册（确保下次打开菜单显示新颜色和新状态）
+      if (hasGmApi()) {
+        const oldId = toggleMenuId;
+        toggleMenuId = null; // 先清空引用，再注册新的，再注销旧的，避免注销 ID 与新 ID 冲突
+        registerToggleMenu(hostname);
+        try {
+          if (oldId !== null) GM_unregisterMenuCommand(oldId);
+        } catch (e) { /* 静默 */ }
+      }
+    } finally {
+      // 🔓 回调结束后立即释放锁（无论成功/失败），确保下一次用户点击正常响应
+      setTimeout(() => { _toggleCallbackLock = false; }, 150);
     }
   };
 
