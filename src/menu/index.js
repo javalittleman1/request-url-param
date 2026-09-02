@@ -20,11 +20,13 @@ let toggleMenuId = null;
 let backupMenuId = null;
 let registeredHostname = null;
 
-// 🔒 防重入锁：避免因 GM 菜单重注册机制导致回调被触发两次
-// 当用户点击一次菜单后，在整个回调执行 + 重注册完成前，忽略任何重复调用
+// 🔒 防重入锁（本 frame 内存级别，防止单次回调栈内重复触发）
 let _toggleCallbackLock = false;
-// 记录上一次通知时的「hostname + enabled + 毫秒时间戳」三元组，防止极端情况下的重复通知
-let _lastNotificationKey = '';
+
+// 🔒 跨 frame 通知去重（同源 localStorage 原子 CAS 锁，跨不同 iframe 共享）
+// Tampermonkey 菜单点击时，若多个 frame 都执行回调，此锁保证在 NOTIF_LOCK_MS 窗口内整个 tab 只弹 1 次通知
+const NOTIF_LOCK_KEY = 'rup::notif_lock_v1';
+const NOTIF_LOCK_MS = 2500; // 2.5 秒 — 覆盖 notification 本身的 timeout(2s) + 重注册延迟
 
 /**
  * Unicode 实心圆符号（作为状态圆点图标）
@@ -108,12 +110,31 @@ function registerToggleMenu(hostname) {
       setDomainEnabled(hostname, newValue);
       eventBus.emit('rup:domain-toggle', { hostname, enabled: newValue });
 
-      // 2. 通知（三重去重：锁 + 状态比对 + key 比对）
+      // 2. 通知（跨 frame 去重：localStorage CAS 锁 + 2.5s 窗口，整个同源 tab 只允许第一个拿到锁的人发通知）
       if (typeof GM_notification === 'function') {
         const nowTs = Date.now();
-        const notifKey = `${hostname}::${newValue}::${Math.floor(nowTs / 1200)}`; // 1.2s 窗口内同 hostname+enabled 只算一次
-        if (notifKey !== _lastNotificationKey) {
-          _lastNotificationKey = notifKey;
+        let acquired = false;
+        try {
+          if (typeof localStorage !== 'undefined') {
+            const raw = localStorage.getItem(NOTIF_LOCK_KEY);
+            const prevTs = raw ? parseInt(raw, 10) || 0 : 0;
+            if (nowTs - prevTs < NOTIF_LOCK_MS) {
+              // 🔒 窗口内锁被占用 → 说明同 tab 其他 frame/其他回调已经发过通知 → 直接跳过
+              acquired = false;
+            } else {
+              localStorage.setItem(NOTIF_LOCK_KEY, String(nowTs));
+              acquired = true;
+            }
+          } else {
+            // 极端环境（隐私模式等）localStorage 不可用 → 退化为窗口内存级去重
+            acquired = true;
+          }
+        } catch (e) {
+          // 隐私模式下写 localStorage 抛错，直接允许发通知（最差情况也只多 1 次）
+          acquired = true;
+        }
+
+        if (acquired) {
           try {
             GM_notification({
               text: newValue ? '🟢 已启用：修改参数功能打开' : '⚫ 已禁用：修改参数功能关闭',

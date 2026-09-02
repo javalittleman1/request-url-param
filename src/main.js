@@ -1,4 +1,24 @@
 // RUP 油猴脚本主入口
+// ⚠️【关键】仅在 TOP FRAME（主窗口）执行，任何 iframe / frame / nested-iframe 内一律直接 return
+//    原因：Tampermonkey 菜单是「浏览器级」共享的；若多个 frame 各自 registerMenus，
+//    点击菜单项时每个 frame 的 onClick 都会被调用一次 → 出现多个相同 notification / FAB 重复挂载等问题
+(function topFrameGuard() {
+  try {
+    if (typeof window === 'undefined') return
+    // 跨域 iframe 访问 window.top 会抛错，这种场景也直接判定为非顶层
+    const isTop = (function () {
+      try {
+        return window.top === window.self
+          || window.top === window
+          || window.parent === window.self
+      } catch (e) {
+        return false
+      }
+    })()
+    if (!isTop) return
+  } catch (e) { return }
+})()
+
 import { getFullConfig, setFullConfig, isDomainEnabled } from './storage/index.js'
 import { registerMenus, refreshMenus } from './menu/index.js'
 import { eventBus } from './utils/eventBus.js'
