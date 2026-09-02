@@ -2,11 +2,17 @@
   <div class="rup-panels">
     <div class="rup-panel rup-panel--left">
       <h4>当前参数</h4>
-      <ul class="rup-list">
+      <ul class="rup-list rup-list--left" ref="leftListRef">
         <li
           v-for="(item, idx) in currentParams"
           :key="'cp-' + idx"
-          :class="{ 'rup-item--selected': selectedKeys.has(item.key) }"
+          :ref="(el) => setLeftRowRef(el, item.key)"
+          :class="{
+            'rup-item--selected': selectedKeys.has(item.key),
+            'rup-item--focused': focusedModifyKey && item.key === focusedModifyKey,
+            'rup-item--flash': item.key === flashKey,
+          }"
+          :data-flash-key="flashKey && item.key === flashKey ? flashSeq : 0"
           @click="addToModifyList(item)"
         >
           <span class="rup-key">{{ item.key }}</span>
@@ -35,6 +41,8 @@
             :ref="(el) => setKeyRef(el, idx)"
             v-model="item.key"
             @input="handleKeyInput(idx)"
+            @focus="handleModifyFocus(idx, 'key')"
+            @blur="handleModifyBlur(idx, 'key')"
             placeholder="参数名"
           />
           <span class="rup-eq">=</span>
@@ -42,6 +50,8 @@
             type="text"
             class="inp-val"
             v-model="item.value"
+            @focus="handleModifyFocus(idx, 'value')"
+            @blur="handleModifyBlur(idx, 'value')"
             placeholder="参数值"
           />
           <button class="btn-del" @click="handleDeleteParam(idx)" title="删除">
@@ -76,18 +86,33 @@ const emit = defineEmits([
   'update:selectedKeys'
 ])
 
+// ============ Refs 引用 ============
 const newKeyRefs = ref({})
 const pendingFocusIdx = ref(-1)
 const currentParamsSnapshot = ref([])
+const leftListRef = ref(null)         // 当前参数面板的滚动容器（ul.rup-list--left）
+const leftRowRefs = ref({})           // key=参数名，value=对应 <li> DOM 元素（当前参数面板）
 
-const currentParams = computed(() => {
-  return currentParamsSnapshot.value
-})
+// ============ 焦点联动状态（修改列表 → 当前参数） ============
+const focusedModifyKey = ref('')      // 修改列表中正在编辑、且在当前参数中命中的参数名 → 让对应行"框住"
+const flashKey = ref('')              // 瞬间闪烁动画触发的参数名
+const flashSeq = ref(0)               // 每次闪烁自增，强制让 CSS animation 重新从 0% 播放
+let _flashTimer = null
+let _blurClearTimer = null
+
+const currentParams = computed(() => currentParamsSnapshot.value)
+
+function setLeftRowRef(el, key) {
+  if (!key) return
+  if (el) leftRowRefs.value[key] = el
+  else delete leftRowRefs.value[key]
+}
 
 function refreshCurrentParams() {
   currentParamsSnapshot.value = parseQuery(window.location.href)
+  // 刷新后清空旧引用（重建 DOM）
+  leftRowRefs.value = {}
 }
-
 refreshCurrentParams()
 
 function setKeyRef(el, idx) {
@@ -104,6 +129,95 @@ function setKeyRef(el, idx) {
   }
 }
 
+// ==================================================
+// 🌟 核心联动：修改列表输入框 获得焦点 → 定位 + 闪烁 + 框住
+// ==================================================
+function handleModifyFocus(idx) {
+  if (_blurClearTimer) {
+    // 如果即将失焦，但又立刻切到同一行另一个输入（key<->value）或同行，不要清除高亮
+    clearTimeout(_blurClearTimer)
+    _blurClearTimer = null
+  }
+  const item = props.modifyList[idx]
+  if (!item) return
+  const k = (item.key || '').trim()
+  if (!k) { focusedModifyKey.value = ''; return }
+  // 只有在「当前参数」里真正存在的 key，才做定位/闪烁/高亮
+  const exists = currentParamsSnapshot.value.some(p => p.key === k)
+  if (!exists) { focusedModifyKey.value = ''; return }
+
+  focusedModifyKey.value = k
+  // 1. 滚动定位
+  scrollCurrentParamIntoView(k)
+  // 2. 触发闪烁（每次 focus 都闪一次，通过 seq++ 强制 CSS 动画重放）
+  triggerFlash(k)
+}
+
+function handleModifyBlur(idx) {
+  // 延时 60ms 清空：如果用户只是从同个 row 的 key 跳到 value（Tab），
+  // 会立刻触发下一次 focus → handleModifyFocus 先把 timer 清掉，不会丢失高亮
+  if (_blurClearTimer) clearTimeout(_blurClearTimer)
+  _blurClearTimer = setTimeout(() => {
+    focusedModifyKey.value = ''
+    _blurClearTimer = null
+  }, 60)
+}
+
+/**
+ * 在「当前参数」面板的滚动容器内，把某个参数名的 <li> 平滑居中滚动到可视区中央
+ */
+function scrollCurrentParamIntoView(key) {
+  nextTick(() => {
+    const row = leftRowRefs.value[key]
+    const container = leftListRef.value
+    if (!row || !container) return
+    try {
+      // 相对容器计算位置（不使用 window 的 scrollIntoView，避免整个 modal 外层抖）
+      const cTop = container.scrollTop
+      const cHeight = container.clientHeight
+      const rowOffsetTop = row.offsetTop
+      const rowHeight = row.offsetHeight
+      const targetTop = rowOffsetTop - Math.max(0, (cHeight - rowHeight) / 2)
+      if ('scrollTo' in container && typeof container.scrollTo === 'function') {
+        try {
+          container.scrollTo({ top: targetTop, behavior: 'smooth' })
+          return
+        } catch (e) { /* 老浏览器不支持 smooth 参数，走 fallback */ }
+      }
+      // Fallback：分段滚动做一个"弱平滑"效果
+      const startTop = cTop
+      const delta = targetTop - startTop
+      let p = 0
+      const duration = 180
+      const startTs = Date.now()
+      const step = () => {
+        p = Math.min(1, (Date.now() - startTs) / duration)
+        const ease = 1 - Math.pow(1 - p, 3) // easeOutCubic
+        container.scrollTop = startTop + delta * ease
+        if (p < 1) requestAnimationFrame(step)
+      }
+      requestAnimationFrame(step)
+    } catch (e) { /* 静默 */ }
+  })
+}
+
+/**
+ * 让当前参数面板的某个 key 的行，闪烁一次（黄底高亮 → 复原）
+ */
+function triggerFlash(key) {
+  if (!key) return
+  flashSeq.value += 1     // 强制重放动画（配合 :data-flash-key 绑定）
+  flashKey.value = key
+  if (_flashTimer) clearTimeout(_flashTimer)
+  _flashTimer = setTimeout(() => {
+    flashKey.value = ''
+    _flashTimer = null
+  }, 720)
+}
+
+// ==================================================
+// 原有功能
+// ==================================================
 function addToModifyList(item) {
   const exists = props.modifyList.some(i => i.key === item.key)
   if (!exists) {
@@ -124,10 +238,19 @@ function handleAddParam() {
 function handleKeyInput(idx) {
   const item = props.modifyList[idx]
   const newSet = new Set(props.selectedKeys)
-  if (item.key) {
-    newSet.add(item.key)
-  }
+  if (item && item.key) newSet.add(item.key)
   emit('update:selectedKeys', newSet)
+
+  // 正在编辑时，如果 key 变了且正好命中当前参数 → 实时同步高亮 + 闪烁定位一次（更好 UX）
+  const k = item ? (item.key || '').trim() : ''
+  if (focusedModifyKey.value || k) {
+    const prev = focusedModifyKey.value
+    focusedModifyKey.value = k && currentParamsSnapshot.value.some(p => p.key === k) ? k : ''
+    if (k && focusedModifyKey.value && focusedModifyKey.value !== prev) {
+      scrollCurrentParamIntoView(k)
+      triggerFlash(k)
+    }
+  }
 }
 
 function handleDeleteParam(idx) {
@@ -141,6 +264,10 @@ function handleDeleteParam(idx) {
       const newSet = new Set(props.selectedKeys)
       newSet.delete(deletedKey)
       emit('update:selectedKeys', newSet)
+      // 删除的如果正是当前高亮 key → 立即取消框住
+      if (focusedModifyKey.value === deletedKey) {
+        focusedModifyKey.value = ''
+      }
     }
   }
 }
@@ -148,9 +275,7 @@ function handleDeleteParam(idx) {
 watch(
   () => props.visible,
   (val) => {
-    if (val) {
-      refreshCurrentParams()
-    }
+    if (val) refreshCurrentParams()
   }
 )
 
@@ -214,7 +339,9 @@ defineExpose({
 
 .rup-panel--left .rup-list li {
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s, outline 0.15s;
+  outline: 2px solid transparent;
+  outline-offset: -1px;
 }
 
 .rup-panel--left .rup-list li:hover {
@@ -224,6 +351,55 @@ defineExpose({
 .rup-panel--left .rup-list li.rup-item--selected {
   font-weight: 700;
   color: #2563eb;
+}
+
+/* =========================================================
+   🌟 新增：修改列表输入框聚焦 → 让左侧当前参数匹配行"框住"
+   ========================================================= */
+.rup-panel--left .rup-list li.rup-item--focused {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+  background: #eef2ff;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
+  border-radius: 8px;
+  z-index: 2;
+  position: relative;
+}
+
+/* =========================================================
+   🌟 新增：闪烁一下（黄底+缩放+外发光，播放一次 700ms）
+   通过 [data-flash-key] 属性变化强制动画重放
+   ========================================================= */
+.rup-panel--left .rup-list li.rup-item--flash[data-flash-key] {
+  animation: rup-flash 720ms cubic-bezier(.4,0,.2,1) both;
+}
+
+@keyframes rup-flash {
+  0% {
+    background-color: #fef3c7;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5);
+  }
+  35% {
+    background-color: #fde68a;
+    transform: scale(1.025);
+    box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.22);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
+}
+
+/* 如果该 li 同时被选中(selected)+聚焦(focused)，闪烁后仍然保持聚焦边框 */
+.rup-panel--left .rup-list li.rup-item--focused.rup-item--flash[data-flash-key] {
+  animation-name: rup-flash-keep-focus;
+}
+@keyframes rup-flash-keep-focus {
+  0%   { background-color: #fef3c7; transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5); }
+  35%  { background-color: #fde68a; transform: scale(1.025); box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.22); }
+  100% { background-color: #eef2ff; transform: scale(1); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18); }
 }
 
 .rup-key {
