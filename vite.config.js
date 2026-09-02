@@ -12,7 +12,7 @@ export default defineConfig({
       userscript: {
         name: 'RUP - 请求URL参数修改',
         namespace: 'npm/rup-tampermonkey',
-        version: '0.1.0',
+        version: '0.2.0',
         icon: `data:image/svg+xml;charset=UTF-8,${rabbitSvg}`,
         match: ['*://*/*'],
         // ★ 脚本自动更新地址（篡改猴会定时检查该地址的 version 元字段，比本地高就会提示自动更新）

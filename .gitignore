@@ -9,6 +9,8 @@ lerna-debug.log*
 
 node_modules
 dist
+# 油猴构建产物需要单独入仓，才能让 Tampermonkey 从 GitHub raw 自动更新
+!dist/rup-tampermonkey.user.js
 dist-ssr
 *.local
 
