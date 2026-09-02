@@ -1,7 +1,5 @@
 import { isDomainEnabled, setDomainEnabled } from '../storage/index.js';
 import { eventBus } from '../utils/eventBus.js';
-import iconPenBlack from '../assets/icons/iconPenBlack.js';
-import iconPenGreen from '../assets/icons/iconPenGreen.js';
 import iconDisk from '../assets/icons/iconDisk.js';
 import iconRabbit from '../assets/icons/iconRabbit.js';
 
@@ -22,14 +20,17 @@ let toggleMenuId = null;
 let backupMenuId = null;
 let registeredHostname = null;
 
-// 将 SVG 字符串（单引号或双引号包裹的 <svg>）转为 data:image 数据 URL
-// Tampermonkey GM_registerMenuCommand 的 image 参数要求 16x16 大小的 data URI
+/**
+ * Unicode 实心圆符号（作为状态圆点图标）
+ * Tampermonkey 支持菜单项文本里的简单样式，这里用颜色标记前缀更直观
+ */
+const DOT_BLACK = '⚫';  // 黑色实心圆（U+26AB）
+const DOT_GREEN = '🟢';  // 绿色实心圆（U+1F7E2）
+
+// 将 SVG 字符串转为 data:image 数据 URL（给「备份与恢复」用）
 function svgToDataUrl(svgString, size = 16) {
   if (!svgString || typeof svgString !== 'string') return '';
-  // 尝试给根 <svg> 增加 width/height 16（若已有则覆盖）
-  let svg = svgString.trim();
-  // 去除宽高属性后追加 size
-  svg = svg
+  let svg = svgString.trim()
     .replace(/\s+width="[^"]*"/gi, '')
     .replace(/\s+height="[^"]*"/gi, '')
     .replace(/<svg\s+/i, `<svg width="${size}" height="${size}" `);
@@ -44,8 +45,6 @@ function svgToDataUrl(svgString, size = 16) {
 }
 
 const DATA_URLS = {
-  penBlack: svgToDataUrl(iconPenBlack, 16),
-  penGreen: svgToDataUrl(iconPenGreen, 16),
   disk: svgToDataUrl(iconDisk, 16),
   rabbit: svgToDataUrl(iconRabbit, 16),
 };
@@ -74,61 +73,56 @@ function unregisterMenus() {
 
 /**
  * 注册/重注册单个「修改此页参数」切换菜单项
- * 同一个菜单项在启用/禁用时图标和文字会在点击后立即刷新
+ * 使用 Unicode 实心圆（黑/绿）+ 明确状态文字（已禁用/已启用）
+ * 点击后注销 → 立即重注册，下次看到菜单就是新状态
  */
 function registerToggleMenu(hostname) {
   if (!hasGmApi()) return;
   const enabled = isDomainEnabled(hostname);
-  const menuText = enabled
-    ? '🐰 RUP：[绿笔] 修改此页参数（启用）'
-    : '🐰 RUP：[黑笔] 修改此页参数（禁用）';
-  const image = enabled ? DATA_URLS.penGreen : DATA_URLS.penBlack;
+
+  // 菜单文字（实心圆前缀 + 状态后缀）
+  const statusDot = enabled ? DOT_GREEN : DOT_BLACK;
+  const statusText = enabled ? '已启用' : '已禁用';
+  const menuText = `🐰 RUP：${statusDot} 修改此页参数（${statusText}）`;
+
+  const onClick = function () {
+    // 1. 取反状态 → 持久化 → 发事件
+    const currEnabled = isDomainEnabled(hostname);
+    const newValue = !currEnabled;
+    setDomainEnabled(hostname, newValue);
+    eventBus.emit('rup:domain-toggle', { hostname, enabled: newValue });
+
+    // 2. 通知
+    if (typeof GM_notification === 'function') {
+      try {
+        GM_notification({
+          text: newValue ? '🟢 已启用：修改参数功能打开' : '⚫ 已禁用：修改参数功能关闭',
+          title: 'RUP 提示',
+          timeout: 2000,
+          highlight: true,
+        });
+      } catch (e) { /* 静默 */ }
+    }
+
+    // 3. 关键：注销当前菜单 → 立即以新状态重注册（确保下次打开菜单显示新颜色和新状态）
+    if (hasGmApi()) {
+      try { GM_unregisterMenuCommand(toggleMenuId); } catch (e) {}
+      toggleMenuId = null;
+      registerToggleMenu(hostname);
+    }
+  };
+
   try {
-    toggleMenuId = GM_registerMenuCommand(menuText, function () {
-      // 1. 读实际状态 → 取反 → 持久化 → 发事件
-      const currEnabled = isDomainEnabled(hostname);
-      const newValue = !currEnabled;
-      setDomainEnabled(hostname, newValue);
-      eventBus.emit('rup:domain-toggle', { hostname, enabled: newValue });
-
-      // 2. 通知
-      if (typeof GM_notification === 'function') {
-        try {
-          GM_notification({
-            text: newValue ? '🟢 绿笔模式已启用' : '⚫ 黑笔模式已禁用',
-            title: 'RUP 提示',
-            timeout: 2000,
-            highlight: true,
-          });
-        } catch (e) { /* 静默 */ }
-      }
-
-      // 3. ★ 关键：注销当前菜单项 → 以新状态立即重注册同一菜单
-      //    这样用户点击一次后，再次打开 Tampermonkey 菜单就能看到黑笔/绿笔已切换
-      if (hasGmApi()) {
-        try { GM_unregisterMenuCommand(toggleMenuId); } catch (e) {}
-        toggleMenuId = null;
-        registerToggleMenu(hostname);
-      }
-    }, {
-      image: image,
+    // image 传 dataURL（传兔子当通用装饰，真正的状态标识靠文字里的 ● 颜色）
+    toggleMenuId = GM_registerMenuCommand(menuText, onClick, {
+      image: DATA_URLS.rabbit || '',
       autoClose: true,
     });
   } catch (e) {
-    // 某些老版本 Violentmonkey 不支持第三个参数对象
+    // 老版本 Violentmonkey 不支持第三参
     try {
-      toggleMenuId = GM_registerMenuCommand(menuText, function () {
-        const currEnabled = isDomainEnabled(hostname);
-        const newValue = !currEnabled;
-        setDomainEnabled(hostname, newValue);
-        eventBus.emit('rup:domain-toggle', { hostname, enabled: newValue });
-        if (hasGmApi()) {
-          try { GM_unregisterMenuCommand(toggleMenuId); } catch (err) {}
-          toggleMenuId = null;
-          registerToggleMenu(hostname);
-        }
-      });
-    } catch (err) { /* 彻底失败则忽略 */ }
+      toggleMenuId = GM_registerMenuCommand(menuText, onClick);
+    } catch (err) { /* 忽略 */ }
   }
 }
 
@@ -145,7 +139,6 @@ function registerBackupMenu() {
       autoClose: true,
     });
   } catch (e) {
-    // 老环境降级
     try {
       backupMenuId = GM_registerMenuCommand('🐰 RUP：💾 备份与恢复', function () {
         eventBus.emit('rup:open-backup', {});
@@ -155,7 +148,7 @@ function registerBackupMenu() {
 }
 
 /**
- * 对外 API：一次性注册所有 RUP 菜单（调用时传入当前 hostname）
+ * 对外 API：一次性注册所有 RUP 菜单
  * 多次调用会先注销再重注册，保证安全
  */
 export function registerMenus(currentHostname) {
@@ -172,5 +165,5 @@ export function refreshMenus() {
   if (registeredHostname) registerMenus(registeredHostname);
 }
 
-// 导出 dataURL 构造函数方便其他模块复用
+// 导出工具函数方便复用
 export { svgToDataUrl, DATA_URLS };
