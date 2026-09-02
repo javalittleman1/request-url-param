@@ -56,45 +56,38 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      # ★ 关键：用 git worktree 把 dist/ 目录结构（dist/rup-tampermonkey.user.js）
-      #    直接推到独立的 dist 分支根目录下的 dist/ 子目录。
-      #    这样 @updateURL =
-      #    https://raw.githubusercontent.com/javalittleman1/request-url-param/dist/dist/rup-tampermonkey.user.js
-      #    分支 = dist  |  路径 = dist/rup-tampermonkey.user.js   → 完美匹配，100% 可预测
-      - name: 6/6 推送 dist/ 到 dist 分支（手动 git worktree，路径可控）
+      - name: 6/6 推送 dist/ 到 dist 分支（git worktree，路径可控）
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PKG_VERSION: ${{ steps.build.outputs.version }}
           BUILD_COMMIT: ${{ github.sha }}
+          GITHUB_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
-          # 6.1 准备部署临时目录，结构 = dist/ 原路径
+          # 6.1 准备部署临时目录（结构：/README.md + /dist/rup-tampermonkey.user.js）
           mkdir -p /tmp/deploy-root/dist
           cp dist/rup-tampermonkey.user.js /tmp/deploy-root/dist/rup-tampermonkey.user.js
-          cp LICENSE README.md README_EN.md /tmp/deploy-root/ 2>/dev/null || true
-          cat > /tmp/deploy-root/README.md <<'EOF'
-          # RUP Tampermonkey - 脚本分发分支（自动部署，请勿手动修改）
 
-          该分支（`dist`）存储 [RUP Tampermonkey 油猴脚本](https://github.com/javalittleman1/request-url-param)
-          的**自动构建产物**，供 Tampermonkey / Violentmonkey / 篡改猴 读取并自动更新。
-
-          文件位置：
-            - 脚本：[dist/rup-tampermonkey.user.js](./dist/rup-tampermonkey.user.js)
-
-          脚本自动更新直链：
-            https://raw.githubusercontent.com/javalittleman1/request-url-param/dist/dist/rup-tampermonkey.user.js
-
-          源代码 / 问题反馈 / 功能需求 请到 master 分支：
-            https://github.com/javalittleman1/request-url-param
-          EOF
+          # 写 README.md 到部署目录（printf 逐行写，避免 YAML + Bash Heredoc 嵌套导致的 YAML 语法歧义）
+          RD=/tmp/deploy-root/README.md
+          {
+            printf '# RUP Tampermonkey - 脚本分发分支（自动部署，请勿手动修改）\n\n'
+            printf '该分支（`dist`）存储 RUP Tampermonkey 油猴脚本的**自动构建产物**，\n'
+            printf '供 Tampermonkey / Violentmonkey / 篡改猴 读取并自动更新。\n\n'
+            printf '源代码 / 问题反馈 / 功能需求 请到 master 分支：\n'
+            printf '  https://github.com/%s\n\n' "$GITHUB_REPO"
+            printf '脚本自动更新直链：\n'
+            printf '  https://raw.githubusercontent.com/%s/dist/dist/rup-tampermonkey.user.js\n\n' "$GITHUB_REPO"
+            printf '文件位置：\n'
+            printf '  - dist/rup-tampermonkey.user.js\n'
+          } > "$RD"
 
           # 6.2 git 作者信息
           git config --global user.name  "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # 6.3 拉取 dist 分支（如果远端不存在则新建 --orphan）
+          # 6.3 拉取 dist 分支（远端不存在时新建 orphan 分支）
           set +e
           git show-ref --verify --quiet "refs/remotes/origin/dist"
           HAS_DIST=$?
@@ -111,26 +104,30 @@ jobs:
             cd - >/dev/null
           fi
 
-          # 6.4 用构建产物覆盖 /tmp/dist-wt 的内容（保留 git 元信息）
+          # 6.4 用构建产物覆盖 worktree（保留 git 元信息）
           find /tmp/dist-wt -mindepth 1 -maxdepth 1 -not -name '.git' -exec rm -rf {} +
           cp -R /tmp/deploy-root/. /tmp/dist-wt/
 
-          # 6.5 commit & push
+          # 6.5 构造 commit 消息（写文件再 git commit -F，彻底规避 Bash HERE-DOC 与 YAML 缩进冲突）
           cd /tmp/dist-wt
           git add -A
           if git diff --cached --quiet; then
             echo ">>> dist 分支内容无变更，跳过 commit"
           else
-            VERSION_LINE=$(head -n 20 dist/rup-tampermonkey.user.js | grep -E '^//\s*@version' || echo "@version unknown")
-            MSG=$(cat <<EOF
-deploy: 分发油猴脚本 ${VERSION_LINE} (${BUILD_COMMIT:0:7})
-
-由 GitHub Actions 自动构建并部署到 dist 分支
-来源 commit: ${BUILD_COMMIT}
-EOF
-)
-            git commit -m "$MSG"
+            VERSION_LINE="unknown"
+            if [ -f dist/rup-tampermonkey.user.js ]; then
+              VERSION_LINE=$(head -n 20 dist/rup-tampermonkey.user.js | grep -E '^//\s*@version' || echo "@version unknown")
+            fi
+            CM=/tmp/dist-wt/.commit-msg.txt
+            {
+              printf 'deploy: 分发油猴脚本 %s (%s)\n\n' "$VERSION_LINE" "${BUILD_COMMIT:0:7}"
+              printf '由 GitHub Actions 自动构建并部署到 dist 分支\n'
+              printf '来源 commit: %s\n' "$BUILD_COMMIT"
+            } > "$CM"
+            git commit -F "$CM"
+            rm -f "$CM"
           fi
-          # 用 token 写回远端（GITHUB_TOKEN + HTTPS）
-          AUTH_REPO="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          # 6.6 用 GITHUB_TOKEN + x-access-token 凭据推送 dist:dist
+          AUTH_REPO="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
           git push "$AUTH_REPO" dist:dist

@@ -1,0 +1,25 @@
+fix(ci): 修复 workflow L128 YAML 语法错误：移除 Bash HERE-DOC 嵌套
+
+根因：
+  step 6 的 Bash 块内使用了 HERE-DOC（cat <<EOF ... EOF）写 README.md 和 commit msg。
+  该 HERE-DOC 嵌套在 YAML `|` 字面量块中，GitHub Actions 的 YAML 解析器
+  会将 HERE-DOC 内部行的缩进/换行解析为 YAML 语法结构，报：
+    Invalid workflow file: .../build-and-deploy-dist.yml#L128
+    You have an error in your yaml syntax on line 128
+  （此行为在不同 YAML 实现上高度敏感，本地 yaml.safe_load 可能通过，GitHub 官网校验不通过）
+
+修复（彻底移除 HERE-DOC，彻底消除 YAML + Bash 嵌套歧义）：
+  1) dist 分支 README.md：不再用 heredoc，改用 Bash { printf A; printf B; ... } > file 逐行写文件
+  2) commit 消息：不再用 heredoc 赋值 MSG，同样 printf 到临时 /tmp/dist-wt/.commit-msg.txt
+     然后 git commit -F ".commit-msg.txt"，最后 rm 临时文件
+  3) step env GITHUB_REPO 用 ${{ github.repository }} 注入（与 $GITHUB_REPOSITORY 等效，同时 runner 默认有 $GITHUB_REPOSITORY，双保险）
+  4) 本文件通过 yaml.safe_load 结构校验：
+       keys: ['name','on','permissions','jobs']
+       jobs: ['build-and-deploy']
+       step count: 7
+
+关于 GitHub "compare & pull request" 提示：
+  这是首次新建 dist 分支时 GitHub 的默认引导（建议从 dist -> master 提 PR），不影响任何功能。
+  处理方法二选一：
+    a. 直接点击提示右上角 × 关闭即可
+    b. 仓库 Settings -> Branches -> 把 dist 标记为"不建议合并到 master"（非默认分支），后续不再弹出
