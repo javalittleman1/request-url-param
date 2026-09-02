@@ -1,0 +1,18 @@
+fix(ui): 当前参数聚焦框向 li 内收，防止被滚动容器截断或遮挡
+
+问题：
+  左侧「当前参数」列表中，被选中匹配项的蓝框（focused outline 2px
+  + outline-offset 2px + box-shadow 外发光 3px）会向 li 外扩展，遇到
+  滚动容器（overflow-y: auto）的边缘时，任一边都会被相邻 li 或被
+  滚动容器的 clip 区域截断/遮挡，视觉上"缺了一边"。
+
+修复：
+  1) 聚焦 li 的 outline-offset 从 2px → -2px（向 li 内部画，完全不溢出）
+  2) 聚焦 box-shadow 由外发光 0 0 0 3px → inset 0 0 0 2px 内阴影
+     （紫蓝色），不超出 li 盒模型边界
+  3) 闪烁动画 rup-flash / rup-flash-keep-focus 同样全部改成 inset
+     内阴影，缩放 scale(1.02) 稍微调小一点（原 1.025 → 1.02）降低溢出概率
+  4) 增加左侧 panel / list 的 padding（右内边距 + 上下内边距），
+     让聚焦 li 即使仍有微溢出也能在 padding 区内完全可见
+  5) 这样即使 li 贴在滚动容器顶部 / 底部 / 左 / 右边，四条边的聚焦
+     框都会完整可见，不会再被上下相邻行或滚动裁剪遮住。

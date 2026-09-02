@@ -298,6 +298,16 @@ defineExpose({
   min-height: 0;
 }
 
+.rup-panel--left {
+  padding: 8px 12px 8px 4px;
+  box-sizing: border-box;
+}
+
+.rup-panel--left .rup-list {
+  padding: 2px 12px 10px 4px;
+  box-sizing: border-box;
+}
+
 .rup-panel h4 {
   font-size: 14px;
   font-weight: 600;
@@ -355,12 +365,14 @@ defineExpose({
 
 /* =========================================================
    🌟 新增：修改列表输入框聚焦 → 让左侧当前参数匹配行"框住"
+   注意：聚焦框是"向 li 内部收"的 (inset box-shadow + outline-offset 负值)
+        这样不会在 list/container 边缘溢出导致 4 条边被滚动容器截断/遮挡
    ========================================================= */
 .rup-panel--left .rup-list li.rup-item--focused {
   outline: 2px solid #4f46e5;
-  outline-offset: 2px;
+  outline-offset: -2px;
   background: #eef2ff;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
+  box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.2);
   border-radius: 8px;
   z-index: 2;
   position: relative;
@@ -369,6 +381,7 @@ defineExpose({
 /* =========================================================
    🌟 新增：闪烁一下（黄底+缩放+外发光，播放一次 700ms）
    通过 [data-flash-key] 属性变化强制动画重放
+   注意：闪烁的 box-shadow 用 inset（内发光），不溢出到 li 外，避免被滚动容器截断
    ========================================================= */
 .rup-panel--left .rup-list li.rup-item--flash[data-flash-key] {
   animation: rup-flash 720ms cubic-bezier(.4,0,.2,1) both;
@@ -378,17 +391,17 @@ defineExpose({
   0% {
     background-color: #fef3c7;
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5);
+    box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0.6);
   }
   35% {
     background-color: #fde68a;
-    transform: scale(1.025);
-    box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.22);
+    transform: scale(1.02);
+    box-shadow: inset 0 0 0 5px rgba(251, 191, 36, 0.3);
   }
   100% {
     background-color: transparent;
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+    box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0);
   }
 }
 
@@ -397,9 +410,9 @@ defineExpose({
   animation-name: rup-flash-keep-focus;
 }
 @keyframes rup-flash-keep-focus {
-  0%   { background-color: #fef3c7; transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5); }
-  35%  { background-color: #fde68a; transform: scale(1.025); box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.22); }
-  100% { background-color: #eef2ff; transform: scale(1); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18); }
+  0%   { background-color: #fef3c7; transform: scale(1); box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0.6); }
+  35%  { background-color: #fde68a; transform: scale(1.02); box-shadow: inset 0 0 0 5px rgba(251, 191, 36, 0.3); }
+  100% { background-color: #eef2ff; transform: scale(1); box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.2); }
 }
 
 .rup-key {
