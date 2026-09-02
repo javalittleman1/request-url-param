@@ -1,6 +1,6 @@
 // RUP 油猴脚本主入口
 import { getFullConfig, setFullConfig, isDomainEnabled } from './storage/index.js'
-import { registerMenus } from './menu/index.js'
+import { registerMenus, refreshMenus } from './menu/index.js'
 import { eventBus } from './utils/eventBus.js'
 import { mountFab, unmountFab } from './mount/fab.js'
 import { mountEditor, unmountEditor } from './mount/editor.js'
@@ -40,10 +40,11 @@ eventBus.on('rup:open-editor', () => {
 })
 // 4.3 打开备份恢复
 eventBus.on('rup:open-backup', () => { try { mountBackup() } catch {} })
-// 4.4 导入配置后：根据当前 hostname 是否被新配置启用，同步 FAB 状态
+// 4.4 导入配置后：根据当前 hostname 是否被新配置启用，同步 FAB 状态 + 刷新菜单黑/绿笔图标
 eventBus.on('rup:config-imported', () => {
   try {
     unmountFab()
     if (isDomainEnabled(currentHostname)) mountFab()
+    refreshMenus()
   } catch {}
 })

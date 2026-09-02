@@ -47,6 +47,8 @@ function handleSubClick() {
   right: 32px;
   bottom: 32px;
   z-index: 2147483600;
+  font-size: 0;
+  line-height: 0;
 }
 
 .rup-fab__inner {
@@ -70,6 +72,8 @@ function handleSubClick() {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  overflow: hidden;
 }
 
 .rup-fab__main {
@@ -97,8 +101,21 @@ function handleSubClick() {
   pointer-events: auto;
 }
 
+.rup-fab__icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.rup-fab__icon :deep(svg),
 .rup-fab__icon svg {
-  width: 24px;
-  height: 24px;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px;
+  min-height: 28px;
+  display: block !important;
 }
 </style>
