@@ -15,6 +15,7 @@ export default defineConfig({
         version: '0.1.0',
         icon: `data:image/svg+xml;charset=UTF-8,${rabbitSvg}`,
         match: ['*://*/*'],
+        noframes: true, // ★ 关键：油猴内核级阻止脚本在 iframe 中执行（比任何 JS 守卫都早且可靠）
         grant: [
           'GM_registerMenuCommand',
           'GM_setValue',
@@ -22,7 +23,8 @@ export default defineConfig({
           'GM_deleteValue',
           'GM_listValues',
           'GM_addStyle',
-          'GM_notification',
+          // GM_notification 不再使用（系统级 notification 会因多 frame 注册回调而重复）
+          // 改用页面内轻量 Toast 提示
         ],
       },
       build: {
