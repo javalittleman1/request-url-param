@@ -101,12 +101,11 @@ function registerToggleMenu(hostname) {
         1800
       );
 
-      // 注销旧菜单 → 立即按新状态重注册（下次看到菜单时文字/颜色已切换）
+      // ★ 关键：统一调用 registerMenus() 重注册全部菜单
+      //   registerMenus() 内部会先 unregisterMenus() 注销「修改此页参数 + 备份与恢复」两个，
+      //   再按「① 修改此页参数 ② 备份与恢复」的固定顺序重注册，彻底保证顺序永远不变
       if (hasGmApi()) {
-        const oldId = toggleMenuId;
-        toggleMenuId = null;
-        registerToggleMenu(hostname);
-        try { if (oldId !== null) GM_unregisterMenuCommand(oldId); } catch (e) {}
+        registerMenus(hostname);
       }
     } finally {
       setTimeout(() => { _toggleCallbackLock = false; }, 120);
