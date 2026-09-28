@@ -43,141 +43,79 @@ function handleSubClick() {
 
 <style scoped>
 .rup-fab {
-  position: fixed !important;
-  right: 32px !important;
-  bottom: 32px !important;
-  z-index: 2147483600 !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  float: none !important;
-  clear: none !important;
-  display: block !important;
-  top: auto !important;
-  left: auto !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.rup-fab *,
-.rup-fab *::before,
-.rup-fab *::after {
-  box-sizing: border-box !important;
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  z-index: 2147483600;
+  font-size: 0;
+  line-height: 0;
 }
 
 .rup-fab__inner {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  position: relative !important;
-  flex-direction: row !important;
-  justify-content: flex-end !important;
-  width: auto !important;
-  height: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  float: none !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  flex-direction: row;
+  justify-content: flex-end;
 }
 
 .rup-fab__main,
 .rup-fab__sub {
-  width: 52px !important;
-  height: 52px !important;
-  min-width: 52px !important;
-  min-height: 52px !important;
-  max-width: 52px !important;
-  max-height: 52px !important;
-  border-radius: 50% !important;
-  border: none !important;
-  cursor: pointer !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
-  transition: all 0.2s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-  margin: 0 !important;
-  float: none !important;
-  position: static !important;
-  top: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  left: auto !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  line-height: 1 !important;
-  font-size: 14px !important;
-  font-family: inherit !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
-  text-indent: 0 !important;
-  text-shadow: none !important;
-  vertical-align: middle !important;
-  word-spacing: normal !important;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
 }
 
 .rup-fab__main {
-  background: linear-gradient(135deg, #FF6B9D, #FF8E53) !important;
-  color: #fff !important;
+  background: linear-gradient(135deg, #FF6B9D, #FF8E53);
+  color: #fff;
 }
 
 .rup-fab__main:hover {
-  transform: scale(1.05) !important;
+  transform: scale(1.05);
 }
 
 .rup-fab__sub {
-  background: #fff !important;
-  color: #333 !important;
-  border: 1px solid #e5e7eb !important;
-  transform: translateX(calc(100% + 8px)) !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transition-duration: 250ms !important;
+  background: #fff;
+  color: #333;
+  border: 1px solid #e5e7eb;
+  transform: translateX(calc(100% + 8px));
+  opacity: 0;
+  pointer-events: none;
+  transition-duration: 250ms;
 }
 
 .rup-fab:hover .rup-fab__sub {
-  transform: translateX(0) !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .rup-fab__icon {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  min-height: 28px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  line-height: 1 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  font-size: 0 !important;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .rup-fab__icon :deep(svg),
 .rup-fab__icon svg {
   width: 28px !important;
   height: 28px !important;
-  min-width: 28px !important;
-  min-height: 28px !important;
+  min-width: 28px;
+  min-height: 28px;
   display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  fill: currentColor !important;
-  stroke: currentColor !important;
-  fill-opacity: 1 !important;
-  stroke-width: initial !important;
-  overflow: visible !important;
-  margin: 0 !important;
-  padding: 0 !important;
 }
 </style>

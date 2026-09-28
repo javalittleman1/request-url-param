@@ -285,332 +285,208 @@ defineExpose({
 </script>
 
 <style scoped>
-.rup-panels,
-.rup-panels *,
-.rup-panels *::before,
-.rup-panels *::after {
-  box-sizing: border-box !important;
-}
-
 .rup-panels {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 20px !important;
-  height: 100% !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  box-sizing: border-box !important;
-  font-family: inherit !important;
-  font-size: 14px !important;
-  line-height: 1.5 !important;
-  color: #333 !important;
-  float: none !important;
-  clear: none !important;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  height: 100%;
 }
 
 .rup-panel {
-  display: flex !important;
-  flex-direction: column !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  box-sizing: border-box !important;
-  float: none !important;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .rup-panel--left {
-  padding: 8px 12px 8px 4px !important;
-  box-sizing: border-box !important;
+  padding: 8px 12px 8px 4px;
+  box-sizing: border-box;
 }
 
 .rup-panel--left .rup-list {
-  padding: 2px 12px 10px 4px !important;
-  box-sizing: border-box !important;
+  padding: 2px 12px 10px 4px;
+  box-sizing: border-box;
 }
 
 .rup-panel h4 {
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  margin: 0 0 12px 0 !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  line-height: 1.4 !important;
-  color: #111827 !important;
-  width: auto !important;
-  height: auto !important;
-  font-family: inherit !important;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
 }
 
 .rup-add-btn {
-  display: inline-block !important;
-  padding: 4px 10px !important;
-  font-size: 12px !important;
-  background: #eef2ff !important;
-  color: #4f46e5 !important;
-  border-radius: 6px !important;
-  margin-left: 8px !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  margin-right: 0 !important;
-  cursor: pointer !important;
-  user-select: none !important;
-  line-height: 1.5 !important;
-  float: none !important;
-  width: auto !important;
-  height: auto !important;
-  font-weight: normal !important;
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: #eef2ff;
+  color: #4f46e5;
+  border-radius: 6px;
+  margin-left: 8px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .rup-add-btn:hover {
-  background: #e0e7ff !important;
+  background: #e0e7ff;
 }
 
 .rup-list {
-  list-style: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow-y: auto !important;
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  display: block !important;
-  width: auto !important;
-  height: auto !important;
-  float: none !important;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .rup-list li {
-  padding: 8px 10px !important;
-  border-radius: 6px !important;
-  margin-bottom: 4px !important;
-  margin-top: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  font-size: 13px !important;
-  line-height: 1.5 !important;
-  width: auto !important;
-  height: auto !important;
-  float: none !important;
-  clear: none !important;
-  list-style: none !important;
-  list-style-type: none !important;
-  display: block !important;
-  position: relative !important;
-  box-sizing: border-box !important;
-  color: inherit !important;
-  font-family: inherit !important;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: 13px;
 }
 
 .rup-panel--left .rup-list li {
-  cursor: pointer !important;
-  transition: background 0.15s, box-shadow 0.15s, transform 0.15s, outline 0.15s !important;
-  outline: 2px solid transparent !important;
-  outline-offset: -1px !important;
-  background: transparent !important;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s, outline 0.15s;
+  outline: 2px solid transparent;
+  outline-offset: -1px;
 }
 
 .rup-panel--left .rup-list li:hover {
-  background: #f5f5f7 !important;
+  background: #f5f5f7;
 }
 
 .rup-panel--left .rup-list li.rup-item--selected {
-  font-weight: 700 !important;
-  color: #2563eb !important;
+  font-weight: 700;
+  color: #2563eb;
 }
 
 /* =========================================================
-   聚焦"框住"
+   🌟 新增：修改列表输入框聚焦 → 让左侧当前参数匹配行"框住"
+   注意：聚焦框是"向 li 内部收"的 (inset box-shadow + outline-offset 负值)
+        这样不会在 list/container 边缘溢出导致 4 条边被滚动容器截断/遮挡
    ========================================================= */
 .rup-panel--left .rup-list li.rup-item--focused {
-  outline: 2px solid #4f46e5 !important;
-  outline-offset: -2px !important;
-  background: #eef2ff !important;
-  box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.2) !important;
-  border-radius: 8px !important;
-  z-index: 2 !important;
-  position: relative !important;
+  outline: 2px solid #4f46e5;
+  outline-offset: -2px;
+  background: #eef2ff;
+  box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.2);
+  border-radius: 8px;
+  z-index: 2;
+  position: relative;
 }
 
 /* =========================================================
-   闪烁动画
+   🌟 新增：闪烁一下（黄底+缩放+外发光，播放一次 700ms）
+   通过 [data-flash-key] 属性变化强制动画重放
+   注意：闪烁的 box-shadow 用 inset（内发光），不溢出到 li 外，避免被滚动容器截断
    ========================================================= */
 .rup-panel--left .rup-list li.rup-item--flash[data-flash-key] {
-  animation: rup-flash 720ms cubic-bezier(.4,0,.2,1) both !important;
+  animation: rup-flash 720ms cubic-bezier(.4,0,.2,1) both;
 }
 
 @keyframes rup-flash {
   0% {
-    background-color: #fef3c7 !important;
-    transform: scale(1) !important;
-    box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0.6) !important;
+    background-color: #fef3c7;
+    transform: scale(1);
+    box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0.6);
   }
   35% {
-    background-color: #fde68a !important;
-    transform: scale(1.02) !important;
-    box-shadow: inset 0 0 0 5px rgba(251, 191, 36, 0.3) !important;
+    background-color: #fde68a;
+    transform: scale(1.02);
+    box-shadow: inset 0 0 0 5px rgba(251, 191, 36, 0.3);
   }
   100% {
-    background-color: transparent !important;
-    transform: scale(1) !important;
-    box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0) !important;
+    background-color: transparent;
+    transform: scale(1);
+    box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0);
   }
 }
 
-/* 聚焦行闪烁后保持聚焦边框 */
+/* 如果该 li 同时被选中(selected)+聚焦(focused)，闪烁后仍然保持聚焦边框 */
 .rup-panel--left .rup-list li.rup-item--focused.rup-item--flash[data-flash-key] {
-  animation-name: rup-flash-keep-focus !important;
+  animation-name: rup-flash-keep-focus;
 }
 @keyframes rup-flash-keep-focus {
-  0%   { background-color: #fef3c7 !important; transform: scale(1) !important; box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0.6) !important; }
-  35%  { background-color: #fde68a !important; transform: scale(1.02) !important; box-shadow: inset 0 0 0 5px rgba(251, 191, 36, 0.3) !important; }
-  100% { background-color: #eef2ff !important; transform: scale(1) !important; box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.2) !important; }
+  0%   { background-color: #fef3c7; transform: scale(1); box-shadow: inset 0 0 0 0 rgba(251, 191, 36, 0.6); }
+  35%  { background-color: #fde68a; transform: scale(1.02); box-shadow: inset 0 0 0 5px rgba(251, 191, 36, 0.3); }
+  100% { background-color: #eef2ff; transform: scale(1); box-shadow: inset 0 0 0 2px rgba(79, 70, 229, 0.2); }
 }
 
 .rup-key {
-  font-weight: bold !important;
-  margin-right: 6px !important;
-  margin-left: 0 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding: 0 !important;
-  display: inline !important;
-  line-height: inherit !important;
-  color: inherit !important;
-  width: auto !important;
-  height: auto !important;
+  font-weight: bold;
+  margin-right: 6px;
 }
 
 .rup-eq {
-  color: #999 !important;
-  margin-right: 4px !important;
-  margin-left: 0 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding: 0 !important;
-  display: inline !important;
-  line-height: inherit !important;
-  width: auto !important;
-  height: auto !important;
-  font-weight: normal !important;
+  color: #999;
+  margin-right: 4px;
 }
 
 .rup-val {
-  color: #666 !important;
-  word-break: break-all !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: inline !important;
-  line-height: inherit !important;
-  width: auto !important;
-  height: auto !important;
-  font-weight: normal !important;
+  color: #666;
+  word-break: break-all;
 }
 
 .rup-modify-item {
-  display: flex !important;
-  gap: 6px !important;
-  align-items: center !important;
+  display: flex;
+  gap: 6px;
+  align-items: center;
   padding: 6px !important;
-  background: #fafafa !important;
-  border: 1px solid #f0f0f0 !important;
-  margin-bottom: 4px !important;
-  margin-top: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  box-sizing: border-box !important;
-  float: none !important;
-  clear: none !important;
-  border-radius: 6px !important;
-  flex-wrap: nowrap !important;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
 }
 
 .inp-key,
 .inp-val {
-  padding: 6px 8px !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 4px !important;
-  font-size: 13px !important;
-  outline: none !important;
-  background: #fff !important;
-  color: #111827 !important;
-  margin: 0 !important;
-  line-height: 1.5 !important;
-  font-family: inherit !important;
-  display: inline-block !important;
-  box-sizing: border-box !important;
-  height: auto !important;
-  float: none !important;
-  box-shadow: none !important;
+  padding: 6px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
 }
 
 .inp-key:focus,
 .inp-val:focus {
-  border-color: #4f46e5 !important;
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1) !important;
-  outline: none !important;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
 .inp-key {
-  width: 40% !important;
-  min-width: 80px !important;
-  max-width: none !important;
-  flex-shrink: 0 !important;
+  width: 40%;
 }
 
 .inp-val {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
+  flex: 1;
 }
 
 .btn-del {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  min-height: 28px !important;
-  max-width: 28px !important;
-  max-height: 28px !important;
-  border-radius: 4px !important;
-  background: #fef2f2 !important;
-  color: #ef4444 !important;
-  border: none !important;
-  font-size: 14px !important;
-  cursor: pointer !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-shrink: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  line-height: 1 !important;
-  float: none !important;
-  position: static !important;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: #fef2f2;
+  color: #ef4444;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .btn-del:hover {
-  background: #fee2e2 !important;
+  background: #fee2e2;
 }
 
 .rup-empty {
-  text-align: center !important;
-  color: #999 !important;
-  font-size: 12px !important;
+  text-align: center;
+  color: #999;
+  font-size: 12px;
   padding: 20px 10px !important;
-  background: #fafafa !important;
-  margin-bottom: 4px !important;
-  margin-top: 0 !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  box-sizing: border-box !important;
-  line-height: 1.5 !important;
-  border-radius: 6px !important;
-  font-weight: normal !important;
+  background: #fafafa;
 }
 </style>
