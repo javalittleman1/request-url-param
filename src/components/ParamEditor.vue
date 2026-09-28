@@ -168,151 +168,280 @@ function applyChanges() {
 
 <style scoped>
 .rup-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 2147483601;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  z-index: 2147483601 !important;
 }
 
 .rup-dialog {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 820px;
-  max-width: 95vw;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  z-index: 2147483602;
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 820px !important;
+  max-width: 95vw !important;
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: #fff !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+  z-index: 2147483602 !important;
+  box-sizing: border-box !important;
+  color: #333 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.rup-dialog,
+.rup-dialog *,
+.rup-dialog *::before,
+.rup-dialog *::after {
+  box-sizing: border-box !important;
 }
 
 .rup-dialog__header {
-  flex-shrink: 0;
-  padding: 16px 20px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-shrink: 0 !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #eee !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  float: none !important;
+  clear: none !important;
 }
 
 .rup-dialog__header h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #333 !important;
+  line-height: 1.4 !important;
+  font-family: inherit !important;
+  width: auto !important;
+  height: auto !important;
+  display: block !important;
 }
 
 .rup-close {
-  font-size: 20px;
-  cursor: pointer;
-  color: #666;
-  user-select: none;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  color: #666 !important;
+  user-select: none !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
 }
 
 .rup-close:hover {
-  color: #333;
+  color: #333 !important;
 }
 
 .rup-dialog__body {
-  flex: 1;
-  min-height: 0;
-  padding: 20px;
-  overflow: auto;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 20px !important;
+  overflow: auto !important;
+  margin: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  max-height: none !important;
+  float: none !important;
+  clear: none !important;
+  display: block !important;
 }
 
 .rup-dialog__footer {
-  flex-shrink: 0;
-  padding: 12px 20px;
-  border-top: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-shrink: 0 !important;
+  padding: 12px 20px !important;
+  border-top: 1px solid #eee !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  float: none !important;
+  clear: none !important;
+  background: #fff !important;
+  position: static !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
 }
 
 .rup-footer__left {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 .rup-strategy-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 .rup-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 14px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-weight: normal !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 .rup-checkbox input[type="checkbox"] {
-  cursor: pointer;
+  cursor: pointer !important;
+  margin: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  position: static !important;
 }
 
 .rup-tip {
-  font-size: 12px;
-  color: #666;
+  font-size: 12px !important;
+  color: #666 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.5 !important;
+  font-weight: normal !important;
 }
 
 .rup-strategy-label {
-  font-size: 14px;
+  font-size: 14px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-weight: normal !important;
+  display: inline !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 .rup-radio-group {
-  display: flex;
-  gap: 16px;
+  display: flex !important;
+  gap: 16px !important;
+  flex-wrap: wrap !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 .rup-radio {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  font-size: 14px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-weight: normal !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 .rup-radio input[type="radio"] {
-  cursor: pointer;
+  cursor: pointer !important;
+  margin: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  position: static !important;
+  float: none !important;
 }
 
 .rup-footer__right {
-  display: flex;
-  gap: 10px;
+  display: flex !important;
+  gap: 10px !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 .rup-btn {
-  padding: 8px 18px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  border: none;
-  transition: all 0.2s;
+  padding: 8px 18px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  border: none !important;
+  transition: all 0.2s !important;
+  line-height: 1.5 !important;
+  font-family: inherit !important;
+  margin: 0 !important;
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  float: none !important;
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
 }
 
 .rup-btn--secondary {
-  background: #fff;
-  color: #333;
-  border: 1px solid #ddd;
+  background: #fff !important;
+  color: #333 !important;
+  border: 1px solid #ddd !important;
 }
 
 .rup-btn--secondary:hover {
-  background: #f5f5f5;
+  background: #f5f5f5 !important;
 }
 
 .rup-btn--primary {
-  background: #4f46e5;
-  color: #fff;
+  background: #4f46e5 !important;
+  color: #fff !important;
 }
 
 .rup-btn--primary:hover {
-  background: #4338ca;
+  background: #4338ca !important;
 }
 </style>
