@@ -187,6 +187,9 @@ function applyChanges() {
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   z-index: 2147483602;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .rup-dialog__header {
@@ -195,12 +198,15 @@ function applyChanges() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .rup-dialog__header h3 {
   font-size: 16px;
   font-weight: 600;
   margin: 0;
+  line-height: 1.4;
 }
 
 .rup-close {
@@ -208,6 +214,7 @@ function applyChanges() {
   cursor: pointer;
   color: #666;
   user-select: none;
+  line-height: 1;
 }
 
 .rup-close:hover {
@@ -217,7 +224,9 @@ function applyChanges() {
 .rup-dialog__body {
   padding: 20px;
   overflow: auto;
-  height: calc(85vh - 140px);
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 .rup-dialog__footer {
@@ -226,18 +235,23 @@ function applyChanges() {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .rup-footer__left {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-sizing: border-box;
 }
 
 .rup-strategy-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  line-height: 1.4;
+  box-sizing: border-box;
 }
 
 .rup-checkbox {
@@ -246,24 +260,36 @@ function applyChanges() {
   gap: 6px;
   cursor: pointer;
   font-size: 14px;
+  line-height: 1.4;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .rup-checkbox input[type="checkbox"] {
   cursor: pointer;
+  margin: 0;
+  width: auto;
+  height: auto;
 }
 
 .rup-tip {
   font-size: 12px;
   color: #666;
+  line-height: 1.4;
+  box-sizing: border-box;
 }
 
 .rup-strategy-label {
   font-size: 14px;
+  line-height: 1.4;
+  box-sizing: border-box;
 }
 
 .rup-radio-group {
   display: flex;
   gap: 16px;
+  flex-wrap: wrap;
+  box-sizing: border-box;
 }
 
 .rup-radio {
@@ -272,15 +298,23 @@ function applyChanges() {
   gap: 4px;
   cursor: pointer;
   font-size: 14px;
+  line-height: 1.4;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .rup-radio input[type="radio"] {
   cursor: pointer;
+  margin: 0;
+  width: auto;
+  height: auto;
 }
 
 .rup-footer__right {
   display: flex;
   gap: 10px;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .rup-btn {
@@ -290,6 +324,10 @@ function applyChanges() {
   font-size: 14px;
   border: none;
   transition: all 0.2s;
+  line-height: 1.4;
+  margin: 0;
+  height: auto;
+  box-sizing: border-box;
 }
 
 .rup-btn--secondary {
