@@ -182,8 +182,6 @@ function applyChanges() {
   width: 820px;
   max-width: 95vw;
   max-height: 85vh;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
   background: #fff;
   border-radius: 12px;
@@ -192,7 +190,6 @@ function applyChanges() {
 }
 
 .rup-dialog__header {
-  flex-shrink: 0;
   padding: 16px 20px;
   border-bottom: 1px solid #eee;
   display: flex;
@@ -218,14 +215,12 @@ function applyChanges() {
 }
 
 .rup-dialog__body {
-  flex: 1;
-  min-height: 0;
   padding: 20px;
   overflow: auto;
+  height: calc(85vh - 140px);
 }
 
 .rup-dialog__footer {
-  flex-shrink: 0;
   padding: 12px 20px;
   border-top: 1px solid #eee;
   display: flex;
