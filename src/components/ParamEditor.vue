@@ -167,59 +167,43 @@ function applyChanges() {
 </script>
 
 <style scoped>
-.rup-dialog,
-.rup-dialog *,
-.rup-dialog *::before,
-.rup-dialog *::after {
-  box-sizing: border-box !important;
-}
-
 .rup-mask {
-  position: fixed !important;
-  inset: 0 !important;
+  position: fixed;
+  inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 2147483601 !important;
+  z-index: 2147483601;
 }
 
 .rup-dialog {
-  position: fixed !important;
-  left: 50% !important;
-  top: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  width: 820px !important;
-  max-width: 95vw !important;
-  max-height: 85vh !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 820px;
+  max-width: 95vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  z-index: 2147483602 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  float: none !important;
+  z-index: 2147483602;
 }
 
 .rup-dialog__header {
-  flex-shrink: 0 !important;
+  flex-shrink: 0;
   padding: 16px 20px;
   border-bottom: 1px solid #eee;
-  display: flex !important;
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  min-height: 0 !important;
-  float: none !important;
-  background: #fff;
 }
 
 .rup-dialog__header h3 {
   font-size: 16px;
   font-weight: 600;
-  margin: 0 !important;
+  margin: 0;
 }
 
 .rup-close {
@@ -234,136 +218,74 @@ function applyChanges() {
 }
 
 .rup-dialog__body {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
+  flex: 1;
+  min-height: 0;
   padding: 20px;
-  overflow: auto !important;
-  margin: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  float: none !important;
-  display: block !important;
+  overflow: auto;
 }
 
 .rup-dialog__footer {
-  flex-shrink: 0 !important;
+  flex-shrink: 0;
   padding: 12px 20px;
   border-top: 1px solid #eee;
-  display: flex !important;
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  float: none !important;
-  clear: none !important;
-  background: #fff !important;
-  position: static !important;
-  bottom: auto !important;
-  left: auto !important;
-  right: auto !important;
-  top: auto !important;
-  visibility: visible !important;
-  opacity: 1 !important;
 }
 
 .rup-footer__left {
-  display: flex !important;
+  display: flex;
   flex-direction: column;
   gap: 8px;
-  margin: 0 !important;
-  padding: 0 !important;
-  width: auto !important;
-  height: auto !important;
 }
 
 .rup-strategy-row {
-  display: flex !important;
+  display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .rup-checkbox {
-  display: flex !important;
+  display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
   font-size: 14px;
-  margin: 0 !important;
-  padding: 0 !important;
-  font-weight: normal !important;
-  width: auto !important;
-  height: auto !important;
 }
 
 .rup-checkbox input[type="checkbox"] {
   cursor: pointer;
-  margin: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  padding: 0 !important;
-  display: inline-block !important;
-  position: static !important;
-  float: none !important;
 }
 
 .rup-tip {
   font-size: 12px;
   color: #666;
-  margin: 0 !important;
-  padding: 0 !important;
-  line-height: 1.5;
 }
 
 .rup-strategy-label {
   font-size: 14px;
-  margin: 0 !important;
-  padding: 0 !important;
-  font-weight: normal !important;
 }
 
 .rup-radio-group {
-  display: flex !important;
+  display: flex;
   gap: 16px;
-  flex-wrap: wrap !important;
-  margin: 0 !important;
-  padding: 0 !important;
 }
 
 .rup-radio {
-  display: flex !important;
+  display: flex;
   align-items: center;
   gap: 4px;
   cursor: pointer;
   font-size: 14px;
-  margin: 0 !important;
-  padding: 0 !important;
-  font-weight: normal !important;
-  width: auto !important;
-  height: auto !important;
 }
 
 .rup-radio input[type="radio"] {
   cursor: pointer;
-  margin: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  padding: 0 !important;
-  display: inline-block !important;
-  position: static !important;
-  float: none !important;
 }
 
 .rup-footer__right {
-  display: flex !important;
+  display: flex;
   gap: 10px;
-  flex-shrink: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  width: auto !important;
-  height: auto !important;
 }
 
 .rup-btn {
@@ -373,17 +295,6 @@ function applyChanges() {
   font-size: 14px;
   border: none;
   transition: all 0.2s;
-  line-height: 1.5 !important;
-  margin: 0 !important;
-  display: inline-block !important;
-  width: auto !important;
-  height: auto !important;
-  text-align: center !important;
-  white-space: nowrap !important;
-  float: none !important;
-  position: static !important;
-  visibility: visible !important;
-  opacity: 1 !important;
 }
 
 .rup-btn--secondary {
